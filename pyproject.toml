@@ -1,0 +1,38 @@
+[project]
+name = "tt-selenium-cita-extranjeria-alert-task"
+version = "0.1.0"
+description = "Monitors Spanish immigration appointment availability and sends Telegram alerts"
+authors = [
+    { name = "kpliuta", email = "9212935+kpliuta@users.noreply.github.com" }
+]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "selenium>=4.15.0",
+    "webdriver-manager>=4.0.0",
+    "requests>=2.32.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.0.0",
+    "autoflake>=2.0.0",
+    "pytest",
+    "pytest-xdist",
+    "python-dotenv>=1.0.0",
+]
+
+[tool.poetry]
+package-mode = false
+
+[tool.mypy]
+mypy_path = "src"
+explicit_package_bases = true
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

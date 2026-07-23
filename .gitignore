@@ -1,0 +1,13 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Agent
+.agents/
+MEMORY.md
+
+# Environment
+.env
+
+# mypy
+.mypy_cache/
