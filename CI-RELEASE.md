@@ -1,0 +1,235 @@
+# CI & Release Process
+
+This document describes the automated CI checks and release workflow for the
+tt-selenium-cita-extranjeria-alert-task project.
+
+---
+
+## Overview
+
+Every pull request targeting `main` is validated by CI checks. When a PR is
+merged (squash merge), a release workflow automatically bumps the version,
+updates the changelog, creates a git tag, and publishes a GitHub Release.
+
+```
+  PR opened/updated
+        |
+        v
+  +-------------+
+  |  CI checks  |  (tests, mypy, autoflake)
+  +------+------+
+         | must pass
+         v
+  +-------------+
+  |  PR title   |  (conventional commit format)
+  |  validation |
+  +------+------+
+         | must pass
+         v
+     PR merged
+    (squash)
+         |
+         v
+  +--------------+
+  |   Release    |  (version bump, changelog, tag, GitHub Release)
+  |   workflow   |
+  +--------------+
+```
+
+---
+
+## Repository Setup (Required)
+
+Before the workflows can function, two repository settings must be configured.
+
+### 1. Enable squash merge only
+
+The release workflow depends on squash merge — the PR title becomes the single
+commit message on `main`, which is parsed for the version bump type.
+
+Go to **Settings -> General -> Pull Requests** and:
+
+- [ ] **Allow squash merging** — checked
+- [ ] **Allow merge commits** — unchecked
+- [ ] **Allow rebase merging** — unchecked
+
+Or via CLI:
+
+```bash
+gh api repos/{owner}/{repo} \
+  --method PATCH \
+  --field allow_merge_commit=false \
+  --field allow_rebase_merge=false \
+  --field allow_squash_merge=true
+```
+
+### 2. Enable read/write permissions for GITHUB_TOKEN
+
+The release workflow needs to push commits, create tags, and create
+GitHub Releases. The default `GITHUB_TOKEN` must have write access.
+
+Go to **Settings -> Actions -> General -> Workflow permissions** and:
+
+- [ ] Select **Read and write permissions**
+- [ ] Check **Allow GitHub Actions to create and approve pull requests**
+
+Or via CLI:
+
+```bash
+gh api repos/{owner}/{repo}/actions/permissions/workflow \
+  --method PUT \
+  --field default_workflow_permissions=write \
+  --field can_approve_pull_request_reviews=true
+```
+
+---
+
+## Conventional Commits
+
+All PR titles **must** follow the
+[Conventional Commits](https://www.conventionalcommits.org/) format:
+
+```
+<type>(<optional scope>): <description>
+```
+
+### Types
+
+| Type       | Version bump | Description                                   |
+|------------|--------------|-----------------------------------------------|
+| `feat`     | minor        | A new feature                                 |
+| `fix`      | patch        | A bug fix                                     |
+| `docs`     | patch        | Documentation only changes                    |
+| `style`    | patch        | Formatting, missing semicolons, etc.          |
+| `refactor` | patch        | Code change that fixes no bug/adds no feature |
+| `perf`     | patch        | Performance improvement                       |
+| `test`     | patch        | Adding or updating tests                      |
+| `build`    | patch        | Build system or dependency changes            |
+| `ci`       | patch        | CI configuration changes                      |
+| `chore`    | patch        | Other maintenance changes                     |
+| `revert`   | patch        | Reverts a previous commit                     |
+
+### Breaking Changes
+
+To trigger a **major** version bump, add `!` after the type:
+
+```
+feat!: redesign configuration API
+```
+
+Or include a `BREAKING CHANGE:` footer in the commit message body.
+
+### Version Bump Rules
+
+| Change type | Bump  | Example        |
+|-------------|-------|----------------|
+| `fix: ...`  | patch | 0.1.0 -> 0.1.1 |
+| `feat: ...` | minor | 0.1.0 -> 0.2.0 |
+| `feat!:`    | major | 0.1.0 -> 1.0.0 |
+
+On **major** bump: minor and patch reset to 0.
+On **minor** bump: patch resets to 0.
+
+### Examples
+
+```
+fix: handle missing province dropdown option    -> patch
+feat: add Chrome support                        -> minor
+feat!: change parameter naming convention       -> major
+docs: update installation guide                 -> patch
+```
+
+---
+
+## CI Checks (`.github/workflows/ci.yml`)
+
+Runs on every pull request targeting `main`. All checks must pass before
+the PR can be merged.
+
+### What is checked
+
+1. **Type checking** — `poetry run mypy src/`
+   - No type errors allowed
+
+2. **Unused imports** -- `poetry run autoflake --remove-all-unused-imports --ignore-init-module-imports --check --recursive src/`
+   - No unused imports in the source code
+
+---
+
+## PR Title Validation (`.github/workflows/pr-title.yml`)
+
+Runs on every PR targeting `main`. Uses
+[action-semantic-pull-request](https://github.com/amannn/action-semantic-pull-request).
+
+The PR title determines the version bump type when merged. With squash merge,
+the PR title becomes the commit message on `main`.
+
+### Format
+
+```
+<type>(<optional scope>): <description>
+```
+
+Must start with one of: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`,
+`test`, `build`, `ci`, `chore`, `revert`.
+
+---
+
+## Release Workflow (`.github/workflows/release.yml`)
+
+Triggers automatically when a commit is pushed to `main` (i.e., when a PR
+is merged). Skips commits made by the release bot itself (`chore:` prefix)
+to prevent loops.
+
+### What it does
+
+1. **Determines version bump** from the commit message (squashed PR title)
+2. **Calculates new version** from current version in `pyproject.toml`
+3. **Updates `pyproject.toml`** via `poetry version <new-version>`
+4. **Updates `CHANGELOG.md`**:
+   - Replaces `## [Unreleased]` with `## [Unreleased]\n\n## [<version>] - <date>`
+   - The old `[Unreleased]` content (subsections + entries) becomes the new version's content
+5. **Commits** the changes as `chore(release): <version>`
+6. **Creates a git tag** (format: `<version>`, e.g., `1.0.0` — no `v` prefix)
+7. **Pushes** the commit and tag to `main`
+8. **Creates a GitHub Release** with auto-generated release notes
+
+### Tag format
+
+Tags use **bare semver** without a `v` prefix:
+
+```
+1.0.0
+0.2.3
+```
+
+### Permissions
+
+The workflow requires `contents: write` permission to push commits and
+create tags/releases. This is granted via the default `GITHUB_TOKEN`.
+
+---
+
+## Branch Protection (Optional — Not Yet Enabled)
+
+Branch protection rules can be configured on `main` to enforce the CI
+checks as merge requirements. This is **not currently enabled** but
+can be activated via the GitHub UI or CLI when ready.
+
+### What it enforces (when enabled)
+
+- **Require pull request** — no direct pushes to `main`
+- **Require status checks** — `ci` and `pr-title` must pass
+- **Require branches to be up to date** — PRs must be based on latest `main`
+- **Squash merge only** — only squash merge is allowed
+
+---
+
+## Complete Developer Workflow
+
+1. Create a feature branch from `main`
+2. Make changes and commit with conventional commit messages
+3. Open a PR to `main` with a conventional commit title (e.g., `feat: add Chrome support`)
+4. CI automatically runs all checks
+5. Fix any failures until all checks are green
+6. Merge via **squash merge** — release is automatic

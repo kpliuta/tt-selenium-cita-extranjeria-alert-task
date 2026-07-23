@@ -1,0 +1,80 @@
+[general]
+id = "cita_extranjeria_alert"
+name = "Cita Previa Extranjeria Alert"
+description = "Monitors Spanish immigration appointment availability and sends Telegram alerts"
+version = "0.1.0"
+runner_id = "selenium_runner"
+runner_min_version = ">=0.1.0"
+default_timeout = "5m"
+
+[[property]]
+name = "telegram_api_url"
+description = "Telegram Bot API base URL"
+input-type = "text"
+optional = false
+default = "https://api.telegram.org/bot<your_bot_token>"
+
+[[property]]
+name = "telegram_bot_token"
+description = "Telegram Bot Token"
+input-type = "text"
+optional = false
+default = ""
+
+[[property]]
+name = "telegram_chat_id"
+description = "Telegram Chat ID"
+input-type = "text"
+optional = false
+default = ""
+
+[[property]]
+name = "province"
+description = "Spanish province for appointment search"
+input-type = "text"
+optional = false
+default = ""
+
+[[property]]
+name = "office"
+description = "Office (oficina) (leave empty to skip)"
+input-type = "text"
+optional = true
+default = ""
+
+[[property]]
+name = "procedure"
+description = "Exact procedure/tramite string from the website dropdown"
+input-type = "text"
+optional = false
+default = ""
+
+[[property]]
+name = "nie"
+description = "Foreigner identification number (NIE)"
+input-type = "text"
+optional = false
+default = ""
+
+[[property]]
+name = "full_name"
+description = "Full name as on the application"
+input-type = "text"
+optional = false
+default = ""
+
+[[property]]
+name = "send_screenshot"
+description = "Send screenshot on appointment found"
+input-type = "radio"
+optional = false
+options = ["true", "false"]
+default = "false"
+
+[[property]]
+name = "send_notifications_only_on_success"
+description = "Send notifications only when a slot is found"
+input-type = "radio"
+optional = false
+options = ["true", "false"]
+default = "true"
