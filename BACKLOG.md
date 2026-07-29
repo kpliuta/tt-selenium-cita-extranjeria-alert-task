@@ -8,7 +8,7 @@
 
 ## Todo
 
-* —
+* `medium` Move selenium_scraper to a separate library for reusability
 
 ## Investigation
 
