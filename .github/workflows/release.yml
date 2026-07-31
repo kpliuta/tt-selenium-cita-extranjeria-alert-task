@@ -57,6 +57,9 @@ jobs:
       - name: Bump version in pyproject.toml
         run: poetry version "${{ steps.new.outputs.version }}"
 
+      - name: Bump version in metadata.toml
+        run: sed -i 's/^version = ".*"/version = "${{ steps.new.outputs.version }}"/' metadata.toml
+
       - name: Update CHANGELOG.md
         run: |
           NEW_VERSION="${{ steps.new.outputs.version }}"
@@ -67,7 +70,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md pyproject.toml
+          git add CHANGELOG.md pyproject.toml metadata.toml
           git commit -m "chore(release): ${{ steps.new.outputs.version }}"
           git tag "${{ steps.new.outputs.version }}"
           git push && git push --tags
