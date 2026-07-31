@@ -1,6 +1,6 @@
 [project]
 name = "tt-selenium-cita-extranjeria-alert-task"
-version = "0.1.1"
+version = "0.1.2"
 description = "Monitors Spanish immigration appointment availability and sends Telegram alerts"
 authors = [
     { name = "kpliuta", email = "9212935+kpliuta@users.noreply.github.com" }

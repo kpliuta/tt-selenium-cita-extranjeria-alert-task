@@ -2,7 +2,7 @@
 id = "cita_extranjeria_alert"
 name = "Cita Previa Extranjeria Alert"
 description = "Monitors Spanish immigration appointment availability and sends Telegram alerts"
-version = "0.1.0"
+version = "0.1.2"
 runner_id = "selenium_runner"
 runner_min_version = ">=0.1.0"
 default_timeout = "5m"
